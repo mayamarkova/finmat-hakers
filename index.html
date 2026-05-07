@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Квантовите хакери на Финансовата математика</title>
+  <style>
+    :root{
+      --bg:#050713; --panel:#0c122b; --panel2:#111a3d; --cyan:#00f5ff; --pink:#ff2bd6;
+      --green:#28ff9c; --yellow:#ffd166; --red:#ff4d6d; --blue:#6aa9ff; --text:#f6f8ff; --muted:#a7b0d6;
+      --line:rgba(0,245,255,.25); --shadow:0 0 24px rgba(0,245,255,.18),0 0 70px rgba(255,43,214,.08);
+    }
+    *{box-sizing:border-box} html,body{margin:0;min-height:100%;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:var(--text);background:#040612;}
+    body{background:
+      radial-gradient(circle at 10% 10%,rgba(0,245,255,.18),transparent 30%),
+      radial-gradient(circle at 88% 18%,rgba(255,43,214,.16),transparent 34%),
+      radial-gradient(circle at 55% 85%,rgba(40,255,156,.10),transparent 30%),
+      linear-gradient(135deg,#03040c,#07102a 48%,#040612); overflow-x:hidden;}
+    body:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.18;background-image:linear-gradient(rgba(0,245,255,.12) 1px,transparent 1px),linear-gradient(90deg,rgba(0,245,255,.12) 1px,transparent 1px);background-size:42px 42px;mask-image:radial-gradient(circle,#000 10%,transparent 78%)}
+    body:after{content:"";position:fixed;inset:0;pointer-events:none;opacity:.08;background:repeating-linear-gradient(0deg,transparent 0 6px,rgba(255,255,255,.08) 7px);}
+    header{text-align:center;padding:18px 12px 4px;position:relative} h1{margin:0;font-size:clamp(24px,5vw,58px);line-height:1;text-shadow:0 0 12px rgba(0,245,255,.7),0 0 28px rgba(255,43,214,.35)}
+    .subtitle{color:var(--muted);margin-top:9px;font-size:clamp(13px,2vw,17px)} .wrap{width:min(1180px,94vw);margin:14px auto 32px;position:relative}.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:15px}.col-4{grid-column:span 4}.col-5{grid-column:span 5}.col-6{grid-column:span 6}.col-7{grid-column:span 7}.col-8{grid-column:span 8}.col-12{grid-column:span 12}@media(max-width:850px){.col-4,.col-5,.col-6,.col-7,.col-8{grid-column:span 12}header{padding-top:12px}.subtitle{font-size:13px}}
+    .card{background:linear-gradient(180deg,rgba(17,26,61,.94),rgba(7,10,25,.95));border:1px solid var(--line);border-radius:23px;padding:17px;box-shadow:var(--shadow);backdrop-filter:blur(7px)}
+    .glass{background:rgba(4,8,22,.58);border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:14px}.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.space{justify-content:space-between}.center{text-align:center}.muted{color:var(--muted)}
+    input,select{width:100%;padding:14px;border-radius:15px;border:1px solid rgba(0,245,255,.28);background:#060a1c;color:var(--text);font-size:16px;outline:none}input:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(0,245,255,.12)}
+    button{border:0;border-radius:16px;padding:13px 15px;font-weight:900;color:#021019;background:linear-gradient(135deg,var(--cyan),var(--green));cursor:pointer;box-shadow:0 0 18px rgba(0,245,255,.25);transition:.14s transform,.14s filter}button:hover{transform:translateY(-1px);filter:brightness(1.08)}button:disabled{opacity:.5;cursor:not-allowed;transform:none}.btn2{background:linear-gradient(135deg,var(--pink),#8b5cf6);color:#fff}.btn3{background:linear-gradient(135deg,var(--yellow),#ff9f1c)}.danger{background:linear-gradient(135deg,var(--red),#ff8fa3);color:white}.ghost{background:transparent;color:var(--text);border:1px solid rgba(255,255,255,.18);box-shadow:none}.small{font-size:13px;padding:9px 11px;border-radius:12px}.wide{width:100%;text-align:left}
+    .pill{display:inline-flex;gap:7px;align-items:center;border:1px solid rgba(0,245,255,.25);border-radius:999px;padding:7px 10px;background:#060a1a;color:var(--muted);font-size:13px}.scorebig{font-size:clamp(36px,8vw,82px);font-weight:1000;color:var(--green);text-shadow:0 0 19px rgba(40,255,156,.55);line-height:1}
+    .answer{width:100%;text-align:left;margin:8px 0;padding:16px;color:var(--text);background:linear-gradient(135deg,#101b42,#0a0e22);border:1px solid rgba(0,245,255,.18);box-shadow:none}.answer.correct{border-color:var(--green);box-shadow:0 0 20px rgba(40,255,156,.24)}.answer.wrong{border-color:var(--red);box-shadow:0 0 20px rgba(255,77,109,.21)}
+    .leader{display:grid;grid-template-columns:42px 1fr auto;gap:10px;align-items:center;padding:12px;margin:8px 0;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.08);border-radius:16px}.rank{width:33px;height:33px;border-radius:50%;display:grid;place-items:center;background:rgba(0,245,255,.12);color:var(--cyan);font-weight:950}.name{font-weight:900}.score{font-weight:950;color:var(--yellow)}
+    .event{border-left:3px solid var(--cyan);padding:10px 12px;margin:9px 0;background:rgba(0,245,255,.06);border-radius:0 14px 14px 0}.event.bad{border-left-color:var(--red);background:rgba(255,77,109,.08)}.event.good{border-left-color:var(--green);background:rgba(40,255,156,.08)}
+    .terminal{height:310px;border-radius:23px;position:relative;overflow:hidden;background:radial-gradient(circle,#0e234c 0,#071027 55%,#030611 100%);border:1px solid rgba(0,245,255,.25)}
+    .terminal svg{position:absolute;inset:0;width:100%;height:100%;opacity:.8}.ticker{position:absolute;left:0;right:0;bottom:0;padding:10px;background:rgba(0,0,0,.38);border-top:1px solid rgba(0,245,255,.22);font-family:ui-monospace,Consolas,monospace;color:var(--green);white-space:nowrap;overflow:hidden}.ticker span{display:inline-block;animation:ticker 18s linear infinite}@keyframes ticker{from{transform:translateX(100%)}to{transform:translateX(-100%)}}
+    .chart-label{position:absolute;color:#d5f0ff;font-weight:900;font-size:13px;text-shadow:0 0 8px #000}.candle{position:absolute;width:10px;border-radius:3px;background:var(--green);box-shadow:0 0 14px rgba(40,255,156,.6)}.candle.red{background:var(--red);box-shadow:0 0 14px rgba(255,77,109,.6)}
+    .hidden{display:none!important}.toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:#0b1025;border:1px solid rgba(0,245,255,.32);border-radius:16px;padding:14px 16px;box-shadow:var(--shadow);z-index:50;max-width:min(720px,92vw)}
+    .modal{position:fixed;inset:0;background:rgba(0,0,0,.72);display:grid;place-items:center;z-index:40;padding:18px}.modal-box{width:min(640px,96vw);background:linear-gradient(180deg,#11183a,#070a19);border:1px solid rgba(0,245,255,.35);border-radius:24px;padding:20px;box-shadow:0 0 50px rgba(0,245,255,.2)}.linkbox{font-family:ui-monospace,Consolas,monospace;word-break:break-all;color:var(--green);background:#02050e;padding:12px;border-radius:12px;border:1px solid rgba(40,255,156,.25)}
+  </style>
+</head>
+<body>
+<header>
+  <h1>⚡ Квантовите хакери на Финансовата математика</h1>
+  <div class="subtitle">RUSE QUANT EXCHANGE • Вечер на специалност „Финансова математика“ • всеки играе сам, хаква с формули и оцелява на пазара</div>
+</header>
+<div class="wrap" id="app"></div>
+<div id="toast" class="toast hidden"></div>
+
+<script type="module">
+/*
+  РЕЖИМИ:
+  Играч:   ?mode=player&room=FM
+  Проектор:?mode=projector&room=FM
+
+  Firebase е настроен към проекта finmat-haker и използва отделен път: quantHackRooms.
+*/
+const firebaseConfig = {
+  apiKey: "AIzaSyAvEbZpvofEdAnYC-bV31TPXibDNPLvjDU",
+  authDomain: "finmat-haker.firebaseapp.com",
+  databaseURL: "https://finmat-haker-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "finmat-haker",
+  storageBucket: "finmat-haker.firebasestorage.app",
+  messagingSenderId: "639703083755",
+  appId: "1:639703083755:web:c911eaaff1d4531143ecae"
+};
+
+let db=null, ref=null, set=null, get=null, update=null, onValue=null, push=null;
+const FIREBASE_READY = firebaseConfig.apiKey && firebaseConfig.databaseURL && !firebaseConfig.apiKey.includes('PASTE_');
+if(FIREBASE_READY){
+  const appMod = await import('https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js');
+  const dbMod = await import('https://www.gstatic.com/firebasejs/10.12.4/firebase-database.js');
+  const fbApp = appMod.initializeApp(firebaseConfig);
+  db = dbMod.getDatabase(fbApp);
+  ({ref,set,get,update,onValue,push} = dbMod);
+}
+
+const QUESTIONS = [
+ {q:'Какво изучава икономиката най-общо?',a:['Как хората и обществата разпределят ограничени ресурси','Само как се печатат пари','Само как работят банките','Само цените на акциите'],c:0,t:'икономика'},
+ {q:'Какво означава „оскъдност“ в икономиката?',a:['Ресурсите са ограничени спрямо желанията и потребностите','Всички стоки са евтини','Няма нужда от избор','Парите нямат стойност'],c:0,t:'икономика'},
+ {q:'Какво показва търсенето на дадена стока?',a:['Колко от стоката потребителите са готови да купят при различни цени','Колко стоки има в склада','Колко данъци плаща фирмата','Колко служители има производителят'],c:0,t:'икономика'},
+ {q:'Какво обикновено се случва с търсеното количество, ако цената се повиши, при други равни условия?',a:['Намалява','Увеличава се безкрайно','Остава винаги същото','Изчезва предлагането'],c:0,t:'икономика'},
+ {q:'Какво означава равновесна цена?',a:['Цена, при която търсеното и предлаганото количество се изравняват','Най-високата възможна цена','Цена, определена чрез жребий','Цена, която никога не се променя'],c:0,t:'икономика'},
+ {q:'Какво е лихва?',a:['Цена на използването на чужди пари за определен период','Данък върху всички стоки','Разлика между две валути','Вид застраховка'],c:0,t:'финанси'},
+ {q:'Какво означава дисконтиране?',a:['Преизчисляване на бъдеща стойност към настояща стойност','Удвояване на всяка инвестиция','Изтриване на данни от таблица','Купуване само на акции'],c:0,t:'финанси'},
+ {q:'Каква е основната идея на диверсификацията?',a:['Разпределяне на инвестициите, за да се намали рискът','Влагане на всички пари в един актив','Избягване на всякакви изчисления','Купуване само на най-скъпите акции'],c:0,t:'финанси'},
+ {q:'Какво е портфейл във финансите?',a:['Комбинация от различни финансови активи','Само физическа папка с документи','Един-единствен банков кредит','Само парите в касата'],c:0,t:'финанси'},
+ {q:'Каква е типичната връзка между риск и очаквана доходност?',a:['По-високият риск обикновено изисква по-висока очаквана доходност','По-високият риск винаги означава сигурна печалба','Няма никаква връзка между тях','Рискът винаги намалява доходността до нула'],c:0,t:'финанси'},
+ {q:'Каква е вероятността на сигурно събитие?',a:['1','0','-1','1000'],c:0,t:'вероятности'},
+ {q:'Каква е вероятността на невъзможно събитие?',a:['0','1','50','-0.5'],c:0,t:'вероятности'},
+ {q:'Какво означава две събития да са независими?',a:['Настъпването на едното не променя вероятността за другото','Винаги се случват едновременно','Никога не могат да се случат','Имат еднакви имена'],c:0,t:'вероятности'},
+ {q:'Какво е случайна величина?',a:['Числова величина, чиято стойност зависи от случаен изход','Число, избрано винаги от преподавателя','Само средна стойност','Постоянна без никаква промяна'],c:0,t:'вероятности'},
+ {q:'Каква е основната идея на закона за големите числа?',a:['При много наблюдения средният резултат се доближава до очакваната стойност','Големите числа винаги са по-важни от малките','Вероятността винаги е 50%','Всички случайни събития изчезват'],c:0,t:'вероятности'},
+ {q:'Какво е средна аритметична стойност?',a:['Сборът на стойностите, разделен на броя им','Най-често срещаната стойност','Най-голямата стойност','Разликата между максимум и минимум'],c:0,t:'статистика'},
+ {q:'Какво е медиана?',a:['Средната позиционна стойност в подредени данни','Най-често срещаната стойност','Сборът на всички стойности','Стандартна грешка'],c:0,t:'статистика'},
+ {q:'Какво измерва стандартното отклонение?',a:['Разсейването на данните около средната стойност','Само броя на наблюденията','Само най-малката стойност','Само процента на печалба'],c:0,t:'статистика'},
+ {q:'Какво означава корелация?',a:['Степен на статистическа връзка между две променливи','Доказателство за причинност','Вид данък','Гарантирана прогноза'],c:0,t:'статистика'},
+ {q:'Какво означава p-value в хипотезното тестване най-общо?',a:['Вероятност да получим такива или по-екстремни данни, ако нулевата хипотеза е вярна','Вероятност нулевата хипотеза да е вярна','Процент печалба от инвестиция','Средна стойност на извадката'],c:0,t:'статистика'},
+ {q:'Каква е основната идея на застраховането?',a:['Много хора споделят риска от неблагоприятни събития','Един човек поема всички рискове сам','Рискът напълно изчезва','Застрахователят винаги знае бъдещето точно'],c:0,t:'застраховане'},
+ {q:'Какво е застрахователна премия?',a:['Сума, която застрахованият плаща за застрахователна защита','Печалба от акция','Държавна глоба','Вид статистическа таблица'],c:0,t:'застраховане'},
+ {q:'Какво е застрахователно обезщетение?',a:['Сума, която се изплаща при настъпване на покрито събитие','Такса за откриване на банкова сметка','Данък върху доходите','Лихва по депозит'],c:0,t:'застраховане'},
+ {q:'Защо теорията на вероятностите е важна в застраховането?',a:['Помага да се оценява честотата и размерът на бъдещи щети','Позволява да се избегнат всички щети','Замества нуждата от данни','Гарантира печалба на всеки клиент'],c:0,t:'застраховане'},
+ {q:'Какво означава риск в застраховането?',a:['Възможност да настъпи неблагоприятно събитие с финансови последици','Сигурна печалба','Вид валута','Номер на полица'],c:0,t:'застраховане'},
+ {q:'Какво изучава иконометрията?',a:['Количествени връзки между икономически променливи чрез статистически модели','Само геометрични фигури','Само счетоводни документи','Само история на икономиката'],c:0,t:'иконометрия'},
+ {q:'Какво е зависима променлива в регресионен модел?',a:['Променливата, която се опитваме да обясним или прогнозираме','Променлива, която винаги е равна на 1','Променлива, която не участва в модела','Име на графика'],c:0,t:'иконометрия'},
+ {q:'Какво е независима променлива?',a:['Променлива, която използваме като фактор за обяснение или прогноза','Променлива, която не може да се измери','Случайна грешка','Само текстова бележка'],c:0,t:'иконометрия'},
+ {q:'Какво показва коефициентът в линеен регресионен модел?',a:['С колко се променя зависимата променлива при единична промяна на фактора, при други равни условия','Колко реда има таблицата','Дали файлът е записан','Колко студенти са в специалността'],c:0,t:'иконометрия'},
+ {q:'Какво е остатък в регресията?',a:['Разлика между наблюдаваната и прогнозираната стойност','Остатък от банкова сметка','Последната колона в Excel','Най-голямата стойност в извадката'],c:0,t:'иконометрия'},
+ {q:'Какво е акция?',a:['Дял от собствеността в компания','Държавна глоба','Застрахователна премия','Вид статистически тест'],c:0,t:'финансови пазари'},
+ {q:'Какво е облигация?',a:['Дългов финансов инструмент','Дял от населението','Случайна величина','Вид диаграма'],c:0,t:'финансови пазари'},
+ {q:'Какво означава ликвидност на актив?',a:['Колко лесно активът може да се превърне в пари без голяма загуба на стойност','Колко е мокър активът','Колко е стар учебникът','Колко формули има в задачата'],c:0,t:'финансови пазари'},
+ {q:'Какво е волатилност?',a:['Степен на колебание на цената или доходността','Постоянна гарантирана печалба','Данък върху акциите','Банкова карта'],c:0,t:'финансови пазари'},
+ {q:'Какво е Value at Risk най-общо?',a:['Оценка на възможната загуба при дадено ниво на доверие и хоризонт','Гарантирана максимална печалба','Вид застрахователна премия','Средна оценка от изпит'],c:0,t:'финансов риск'},
+ {q:'Какво е времеви ред?',a:['Данни, наблюдавани във времева последователност','Списък с имена по азбучен ред','Само една стойност','Вид застрахователен договор'],c:0,t:'моделиране'},
+ {q:'Защо разделяме данните на обучаваща и тестова част?',a:['За да проверим дали моделът работи върху нови, невиждани данни','За да направим файла по-красив','За да увеличим броя на колоните','За да избегнем всякакви изчисления'],c:0,t:'моделиране'},
+ {q:'Какво е overfitting?',a:['Когато моделът се напасва прекалено към обучаващите данни и се представя по-зле на нови данни','Когато моделът няма никакви параметри','Когато данните са подредени по азбучен ред','Когато всички прогнози са верни завинаги'],c:0,t:'моделиране'},
+ {q:'За какво могат да се използват невронни мрежи във финансите?',a:['За прогнозиране, откриване на измами, кредитен скоринг и анализ на риск','Само за рисуване на графики','Само за замяна на калкулатор','За премахване на всякакъв финансов риск'],c:0,t:'AI във финансите',boss:true},
+ {q:'Финален бос: Какво най-добре описва Финансовата математика?',a:['Съчетание от математика, статистика, икономика, финанси, риск и моделиране на реални данни','Само смятане на лихви на ръка','Само теория без приложения','Само счетоводство без математика'],c:0,t:'ФИНАЛЕН БОС',boss:true}
+];
+
+const CARDS = [
+ {id:'bull', name:'📈 Бичи пазар', text:'+500 КвантКредита', target:false},
+ {id:'bear', name:'📉 Мечи пазар', text:'Избери играч: губи 300 кредита', target:true},
+ {id:'insurance', name:'🛡️ Застрахователна полица', text:'Защита от следващ хак', target:false},
+ {id:'lln', name:'🎲 Закон за големите числа', text:'Ако изоставаш: +700, иначе +200', target:false},
+ {id:'regression', name:'🧮 Регресионен модел', text:'Хакваш най-богатия играч и вземаш 15%', target:false},
+ {id:'arbitrage', name:'🕵️ Арбитраж', text:'Избери играч и открадни 25%', target:true},
+ {id:'centralbank', name:'🏦 Централна банка', text:'Всички +200, ти +500', target:false},
+ {id:'margin', name:'⚠️ Margin Call', text:'Избери играч: губи следващия въпрос', target:true},
+ {id:'aaa', name:'💳 Кредитен рейтинг AAA', text:'Не могат да те хакнат 2 рунда', target:false},
+ {id:'coupon', name:'🧾 Облигационен купон', text:'+300 на всеки 3 верни отговора', target:false},
+ {id:'crisis', name:'🧨 Финансова криза', text:'Всички губят 150 кредита', target:false},
+ {id:'aitrader', name:'🤖 AI трейдър', text:'Следващата печалба се удвоява', target:false},
+ {id:'pvalue', name:'📊 p-value капан', text:'Избери играч: условна статистическа атака', target:true},
+ {id:'montecarlo', name:'🧬 Монте Карло симулация', text:'Случаен резултат от -300 до +800', target:false},
+ {id:'blackswan', name:'🔥 Black Swan', text:'Разменя първия и последния', target:false}
+];
+
+const app=document.getElementById('app'), toastBox=document.getElementById('toast');
+const params=new URLSearchParams(location.search);
+let mode=params.get('mode') || params.get('screen') || 'player';
+let room=(params.get('room') || localStorage.getItem('quant_room') || 'FM').toUpperCase().replace(/[^A-Z0-9А-Я]/g,'').slice(0,12);
+localStorage.setItem('quant_room',room);
+let playerId=localStorage.getItem('quant_player_id') || crypto.randomUUID(); localStorage.setItem('quant_player_id',playerId);
+let playerName=localStorage.getItem('quant_player_name') || '';
+let state=null, unsub=null, lastAutoAdvance=0;
+
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>'"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[m]));
+const toast=(msg,ms=2600)=>{toastBox.innerHTML=msg;toastBox.classList.remove('hidden');setTimeout(()=>toastBox.classList.add('hidden'),ms)};
+const roomPath=()=>`quantHackRooms/${room}`;
+const localKey=()=>`quantHack_${room}`;
+const rnd=n=>Math.floor(Math.random()*n);
+const defaultState=()=>({room,createdAt:Date.now(),players:{},events:{},online:true});
+const now=()=>Date.now();
+
+function hashCode(str){let h=2166136261; for(let i=0;i<str.length;i++){h^=str.charCodeAt(i); h=Math.imul(h,16777619);} return h>>>0;}
+function seededShuffle(arr, seedStr){let a=[...arr], seed=hashCode(seedStr)||1; const rand=()=>{seed=(seed*1664525+1013904223)>>>0; return seed/4294967296;}; for(let i=a.length-1;i>0;i--){const j=Math.floor(rand()*(i+1)); [a[i],a[j]]=[a[j],a[i]];} return a;}
+
+async function readState(){ if(FIREBASE_READY){const s=await get(ref(db,roomPath())); return s.val();} return JSON.parse(localStorage.getItem(localKey())||'null'); }
+async function writeState(s){ if(FIREBASE_READY) return set(ref(db,roomPath()),s); localStorage.setItem(localKey(),JSON.stringify(s)); window.dispatchEvent(new Event('quant-local-change')); }
+async function setPath(path,val){ if(FIREBASE_READY) return set(ref(db,`${roomPath()}/${path}`),val); const s=await readState()||defaultState(); let cur=s; const parts=path.split('/').filter(Boolean); while(parts.length>1){const p=parts.shift();cur[p]=cur[p]||{};cur=cur[p];} cur[parts[0]]=val; await writeState(s); }
+async function patchPath(path,obj){ if(FIREBASE_READY) return update(ref(db,`${roomPath()}/${path}`),obj); const s=await readState()||defaultState(); let cur=s; const parts=path.split('/').filter(Boolean); while(parts.length>1){const p=parts.shift();cur[p]=cur[p]||{};cur=cur[p];} cur[parts[0]]=Object.assign(cur[parts[0]]||{},obj); await writeState(s); }
+async function addEvent(text,kind='good'){ const ev={text,kind,ts:now()}; if(FIREBASE_READY) return push(ref(db,`${roomPath()}/events`),ev); const s=await readState()||defaultState(); s.events=s.events||{}; s.events['e'+now()+Math.random().toString(16).slice(2)]=ev; await writeState(s); }
+function listen(){ if(unsub) unsub(); if(FIREBASE_READY){unsub=onValue(ref(db,roomPath()),snap=>{state=snap.val(); if(!state) initRoom(); else render();});} else {const load=()=>{state=JSON.parse(localStorage.getItem(localKey())||'null'); if(!state) initRoom(); else render();}; window.addEventListener('quant-local-change',load); setInterval(load,900); load();} }
+async function initRoom(){ const s=defaultState(); await writeState(s); state=s; render(); }
+function players(){return Object.entries(state?.players||{}).map(([id,p])=>({id,...p}));}
+function activePlayers(){return players().filter(p=>now()-(p.lastSeen||0)<1000*60*20);}
+function sortedPlayers(){return players().sort((a,b)=>(b.credits||0)-(a.credits||0));}
+function me(){return state?.players?.[playerId]||null;}
+function myQuestion(){const p=me(); return QUESTIONS[Math.min(p?.qIndex||0,QUESTIONS.length-1)];}
+function isFinal(p){return (p?.qIndex||0)>=QUESTIONS.length-5;}
+function playerUrl(){const u=new URL(location.href);u.search=`?mode=player&room=${encodeURIComponent(room)}`;return u.href;}
+function projectorUrl(){const u=new URL(location.href);u.search=`?mode=projector&room=${encodeURIComponent(room)}`;return u.href;}
+function baseWin(q,p){let gain=q.boss?1000:250; if(isFinal(p)) gain*=2; if(p.doubleNext){gain*=2;} return gain;}
+function cleanPatch(patch){Object.keys(patch).forEach(k=>patch[k]===undefined && delete patch[k]); return patch;}
+function currentPortfolioValue(p){return p?.credits||0;}
+
+function leaderboardHtml(){const list=sortedPlayers(); if(!list.length)return '<p class="muted">Още няма играчи.</p>'; return list.map((p,i)=>`<div class="leader"><div class="rank">${i+1}</div><div><div class="name">${esc(p.name)}</div><div class="muted">Q${Math.min((p.qIndex||0)+1,QUESTIONS.length)}/${QUESTIONS.length} • 🔥 ${p.streak||0} ${p.shieldRounds>0?'• 🛡️ '+p.shieldRounds:''} ${p.masterHack?'• 💀 квантов удар':''}</div></div><div class="score">${currentPortfolioValue(p)}</div></div>`).join('');}
+function eventsHtml(limit=8){const ev=Object.values(state?.events||{}).sort((a,b)=>(b.ts||0)-(a.ts||0)).slice(0,limit); if(!ev.length)return '<p class="muted">Пазарът още е спокоен. Подозрително спокоен.</p>'; return ev.map(e=>`<div class="event ${e.kind||''}">${esc(e.text)}<div class="muted" style="font-size:12px">${new Date(e.ts).toLocaleTimeString('bg-BG',{hour:'2-digit',minute:'2-digit'})}</div></div>`).join('');}
+
+function render(){ if(mode==='projector') return renderProjector(); return renderPlayer(); }
+
+function renderPlayer(){
+  if(!state) return app.innerHTML='<div class="card center">Зареждане...</div>';
+  if(!me()) return renderJoin();
+  heartbeat();
+  const p=me(), q=myQuestion();
+  const done=(p.qIndex||0)>=QUESTIONS.length;
+  const skipped=p.skipThis;
+  const options=done?[]:seededShuffle(q.a.map((text,i)=>({text,i})), `${playerId}_${p.qIndex}_${room}`);
+  app.innerHTML=`<div class="grid">
+    <section class="card col-8">
+      <div class="row space"><h2>📱 ${esc(p.name)}</h2><span class="pill">Стая ${esc(room)}</span></div>
+      <div class="row">
+        <span class="pill">💰 ${p.credits||0}</span><span class="pill">📈 ${p.stocks||0}</span><span class="pill">🧑‍💼 ${p.investors||0}</span><span class="pill">⚡ ${p.riskCapital||0}</span><span class="pill">🔥 серия ${p.streak||0}</span>${p.shieldRounds>0?`<span class="pill">🛡️ ${p.shieldRounds}</span>`:''}${p.risky?'<span class="pill">⚠️ риск</span>':''}${p.doubleNext?'<span class="pill">×2 печалба</span>':''}
+      </div><br>
+      ${done?`<div class="glass center"><h2>🏁 Портфейлът е затворен!</h2><p>Ти завърши всички въпроси. Следи RUSE QUANT EXCHANGE на проектора.</p><button class="btn3" onclick="window.restartMe()">🔁 Играй отново</button></div>`:
+      skipped?`<div class="glass center"><h2>⚠️ Margin Call</h2><p>Този въпрос е блокиран. Следващият ще се отвори сам.</p></div>`:
+      `<div class="glass"><span class="pill">${esc(q.t)} ${q.boss?'• БОС ВЪПРОС':''} ${isFinal(p)?'• ⚔️ БИТКА ЗА FM-RU INDEX ×2':''}</span><h2>${esc(q.q)}</h2></div><br>${options.map(o=>`<button class="answer" onclick="window.answer(${o.i},this)">${esc(o.text)}</button>`).join('')}`}
+    </section>
+    <section class="card col-4"><h2>Стойност на портфейла</h2><div class="scorebig">${p.credits||0}</div><p class="muted">КвантКредити</p>${p.masterHack?'<button class="btn2" onclick="window.openMasterHack()">💀 КВАНТОВ УДАР</button><br><br>':''}<button class="ghost small" onclick="window.showLinks()">🔗 Линкове за стаята</button></section>
+    <section class="card col-12"><h2>🏆 Класиране на фондовете</h2>${leaderboardHtml()}</section>
+  </div>`;
+  if(skipped && now()-lastAutoAdvance>2000){ lastAutoAdvance=now(); setTimeout(()=>advanceQuestion(true),1500); }
+}
+
+function renderJoin(){
+  app.innerHTML=`<div class="grid"><section class="card col-7"><h2>Вход в RUSE QUANT EXCHANGE</h2><p class="muted">Играта започва автоматично. Няма учителски старт — пазарът отваря веднага.</p><p>Стая: <b>${esc(room)}</b></p><input id="name" placeholder="Име или квантов псевдоним"><br><br><button onclick="window.registerPlayer()">⚡ Влизам на пазара</button><br><br><button class="ghost small" onclick="window.changeRoom()">Смени стая</button></section><section class="card col-5"><h2>Проектор</h2><p class="muted">Отвори този линк на компютъра с проектора:</p><div class="linkbox">${esc(projectorUrl())}</div></section></div>`;
+}
+
+function renderProjector(){
+  if(!state) return app.innerHTML='<div class="card center">Зареждане на борсовия екран...</div>';
+  app.innerHTML=`<div class="grid"><section class="card col-7"><div class="row space"><h2>🖥️ RUSE QUANT EXCHANGE • ${esc(room)}</h2><span class="pill">${FIREBASE_READY?'online Firebase':'local demo'}</span></div><div class="terminal">
+    <svg viewBox="0 0 100 100" preserveAspectRatio="none"><polyline points="0,78 8,73 15,76 22,61 31,66 39,48 46,57 55,32 63,38 72,24 83,36 100,18" fill="none" stroke="rgba(40,255,156,.85)" stroke-width="1.8"/><polyline points="0,55 10,58 18,52 26,64 35,49 45,53 58,41 69,45 79,34 90,38 100,29" fill="none" stroke="rgba(0,245,255,.55)" stroke-width="1"/></svg>
+    <span class="candle" style="left:12%;top:62%;height:42px"></span><span class="candle red" style="left:20%;top:54%;height:58px"></span><span class="candle" style="left:31%;top:48%;height:45px"></span><span class="candle" style="left:45%;top:31%;height:62px"></span><span class="candle red" style="left:58%;top:37%;height:52px"></span><span class="candle" style="left:72%;top:22%;height:69px"></span><span class="candle" style="left:86%;top:18%;height:54px"></span>
+    <span class="chart-label" style="left:7%;top:12%">FM-RU INDEX</span><span class="chart-label" style="right:7%;top:12%;color:var(--green)">+${Math.max(0,sortedPlayers()[0]?.credits||0)}</span>
+    <div class="ticker"><span>📈 Бичи пазар • 🧮 Регресионен модел • 🎲 Закон за големите числа • 🛡️ Застрахователна полица • 🤖 AI трейдър • 🔥 Black Swan • </span></div>
+  </div><h2>⚡ Пазарни събития и хаквания</h2>${eventsHtml(10)}<br><button class="ghost small" onclick="window.showLinks()">🔗 Покажи линк за играчи</button></section><section class="card col-5"><h2>🏆 Класиране на фондовете</h2>${leaderboardHtml()}</section></div>`;
+}
+
+async function heartbeat(){const p=me(); if(!p || now()-(p.lastSeen||0)<15000)return; await patchPath(`players/${playerId}`,{lastSeen:now()});}
+setInterval(()=>{if(mode!=='projector' && me()) heartbeat();},20000);
+
+window.registerPlayer=async()=>{
+  const name=($('#name')?.value||'').trim().slice(0,24);
+  if(!name) return toast('Напиши име или квантов псевдоним.');
+  playerName=name; localStorage.setItem('quant_player_name',name);
+  const p={name,credits:1000,stocks:0,investors:0,riskCapital:0,streak:0,qIndex:0,shieldRounds:0,masterHack:false,doubleNext:false,risky:false,skipThis:false,lastSeen:now(),joinedAt:now()};
+  await setPath(`players/${playerId}`,p);
+  await addEvent(`${name} отвори фонд на RUSE QUANT EXCHANGE.`, 'good');
+};
+
+window.answer=async(choice,btn)=>{
+  const p=me(); if(!p)return; const q=myQuestion();
+  document.querySelectorAll('.answer').forEach(b=>b.disabled=true);
+  const correct=choice===q.c;
+  btn.classList.add(correct?'correct':'wrong');
+  let patch={lastSeen:now(),answeredAt:now(),skipThis:false};
+  if(correct){
+    let gain=baseWin(q,p);
+    let coupon=(p.coupons||0)>0 && ((p.qIndex||0)+1)%3===0 ? (p.coupons||0)*300 : 0;
+    gain+=coupon;
+    patch.credits=(p.credits||0)+gain;
+    patch.streak=(p.streak||0)+1;
+    patch.doubleNext=false;
+    patch.risky=false;
+    if((patch.streak||0)>=3){patch.masterHack=true;}
+    if(p.shieldRounds>0) patch.shieldRounds=Math.max(0,(p.shieldRounds||0)-1);
+    await patchPath(`players/${playerId}`,cleanPatch(patch));
+    await addEvent(`${p.name} отговори вярно и реализира доходност +${gain}.`, 'good');
+    setTimeout(()=>drawCard(),650);
+  }else{
+    let loss=q.boss?500:150;
+    if(p.risky) loss+=800;
+    if(Math.random()<0.35){ loss+=200; await addEvent(`Грешна пазарна прогноза при ${p.name}: -200 допълнително.`, 'bad'); }
+    patch.credits=Math.max(0,(p.credits||0)-loss);
+    patch.streak=0; patch.risky=false; patch.doubleNext=false;
+    if(p.shieldRounds>0) patch.shieldRounds=Math.max(0,(p.shieldRounds||0)-1);
+    await patchPath(`players/${playerId}`,cleanPatch(patch));
+    await addEvent(`${p.name} сбърка и получи пазарна загуба -${loss}.`, 'bad');
+    setTimeout(()=>advanceQuestion(false),1700);
+  }
+};
+
+async function drawCard(){ const card=CARDS[rnd(CARDS.length)]; showCard(card); }
+function showCard(card){
+  document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="cardModal"><div class="modal-box center"><h2>${esc(card.name)}</h2><p>${esc(card.text)}</p>${card.target?'<button class="btn2" onclick="window.chooseTarget(\''+card.id+'\')">Избери кого да атакуваш</button>':'<button onclick="window.applyCard(\''+card.id+'\')">Приеми картата</button>'}</div></div>`);
+}
+window.applyCard=async(cardId)=>{
+  document.getElementById('cardModal')?.remove();
+  const p=me(); if(!p)return;
+  if(cardId==='bull'){await patchPath(`players/${playerId}`,{credits:(p.credits||0)+500,stocks:(p.stocks||0)+1}); await addEvent(`${p.name} изтегли „Бичи пазар“: +500.`, 'good');}
+  if(cardId==='insurance'){await patchPath(`players/${playerId}`,{shieldRounds:Math.max(p.shieldRounds||0,1)}); await addEvent(`${p.name} купи „Застрахователна полица“.`, 'good');}
+  if(cardId==='aaa'){await patchPath(`players/${playerId}`,{shieldRounds:Math.max(p.shieldRounds||0,2)}); await addEvent(`${p.name} получи „Кредитен рейтинг AAA“ за 2 рунда.`, 'good');}
+  if(cardId==='coupon'){await patchPath(`players/${playerId}`,{coupons:(p.coupons||0)+1}); await addEvent(`${p.name} активира „Облигационен купон“.`, 'good');}
+  if(cardId==='aitrader'){await patchPath(`players/${playerId}`,{doubleNext:true,riskCapital:(p.riskCapital||0)+1}); await addEvent(`${p.name} пусна „AI трейдър“: следваща печалба ×2.`, 'good');}
+  if(cardId==='centralbank'){await centralBank(p);}
+  if(cardId==='crisis'){await globalLose(150,`${p.name} отключи „Финансова криза“: всички губят 150.`);}
+  if(cardId==='lln'){await lawLargeNumbers(p);}
+  if(cardId==='regression'){await regressionHack(p);}
+  if(cardId==='montecarlo'){await monteCarlo(p);}
+  if(cardId==='blackswan'){await blackSwan(p);}
+  setTimeout(()=>advanceQuestion(false),900);
+};
+
+async function centralBank(p){
+  const s=await readState(); const ps=s.players||{};
+  for(const [id,x] of Object.entries(ps)){x.credits=(x.credits||0)+(id===playerId?500:200);}
+  await writeState(s); await addEvent(`${p.name} активира „Централна банка“: ликвидност за всички, повече за него.`, 'good');
+}
+async function lawLargeNumbers(p){
+  const list=sortedPlayers(); const pos=list.findIndex(x=>x.id===playerId); const bonus=pos>=Math.floor(list.length/2)?700:200;
+  await patchPath(`players/${playerId}`,{credits:(p.credits||0)+bonus}); await addEvent(`${p.name} получи „Закон за големите числа“: +${bonus}.`, 'good');
+}
+async function regressionHack(p){
+  const s=await readState(); const ps=s.players||{}; const targets=Object.entries(ps).filter(([id])=>id!==playerId).sort((a,b)=>(b[1].credits||0)-(a[1].credits||0));
+  if(!targets.length){await addEvent(`${p.name} изтегли „Регресионен модел“, но няма кого да моделира.`, 'good'); return;}
+  const [tid,v]=targets[0];
+  if((v.shieldRounds||0)>0){v.shieldRounds=Math.max(0,(v.shieldRounds||0)-1); await writeState(s); await addEvent(`${p.name} насочи регресионен модел към ${v.name}, но защитата го спря.`, 'bad'); return;}
+  const take=Math.floor((v.credits||0)*0.15); v.credits=(v.credits||0)-take; ps[playerId].credits=(ps[playerId].credits||0)+take;
+  await writeState(s); await addEvent(`${p.name} моделира най-богатия фонд и взе ${take} от ${v.name}.`, 'bad');
+}
+async function monteCarlo(p){
+  const outcomes=[800,400,0,-300]; const val=outcomes[rnd(outcomes.length)];
+  await patchPath(`players/${playerId}`,{credits:Math.max(0,(p.credits||0)+val),riskCapital:(p.riskCapital||0)+1}); await addEvent(`${p.name} пусна „Монте Карло симулация“: ${val>=0?'+':''}${val}.`, val>=0?'good':'bad');
+}
+async function blackSwan(p){
+  const s=await readState(); const list=Object.entries(s.players||{}).sort((a,b)=>(b[1].credits||0)-(a[1].credits||0));
+  if(list.length<2){await addEvent(`${p.name} видя Black Swan, но пазарът е твърде малък.`, 'bad'); return;}
+  const first=list[0], last=list[list.length-1]; const temp=first[1].credits||0; first[1].credits=last[1].credits||0; last[1].credits=temp;
+  await writeState(s); await addEvent(`🔥 Black Swan: ${first[1].name} и ${last[1].name} размениха стойностите на портфейлите си.`, 'bad');
+}
+async function globalLose(amount,msg){ const s=await readState(); for(const p of Object.values(s.players||{})){p.credits=Math.max(0,(p.credits||0)-amount);} await writeState(s); await addEvent(msg,'bad'); }
+
+window.chooseTarget=(cardId)=>{
+  document.getElementById('cardModal')?.remove();
+  const list=activePlayers().filter(p=>p.id!==playerId);
+  if(!list.length){toast('Няма друг активен фонд за атака. Пазарна самота.'); setTimeout(()=>advanceQuestion(false),900); return;}
+  document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="targetModal"><div class="modal-box"><h2>Избери цел</h2><p class="muted">Финансовата атака е образователна. Почти.</p>${list.map(p=>`<button class="wide btn2" onclick="window.applyTargetCard('${cardId}','${p.id}')">${esc(p.name)} — 💰 ${p.credits||0} ${p.shieldRounds>0?'🛡️':''}</button><br><br>`).join('')}<button class="ghost" onclick="document.getElementById('targetModal').remove(); window.advanceQuestion(false)">Пропусни</button></div></div>`);
+};
+window.applyTargetCard=async(cardId,targetId)=>{
+  document.getElementById('targetModal')?.remove();
+  const s=await readState(); const attacker=s.players?.[playerId], victim=s.players?.[targetId]; if(!attacker||!victim)return;
+  if((victim.shieldRounds||0)>0){ victim.shieldRounds=Math.max(0,(victim.shieldRounds||0)-1); await writeState(s); await addEvent(`${attacker.name} атакува ${victim.name}, но застрахователният щит го спря.`, 'bad'); setTimeout(()=>advanceQuestion(false),1000); return; }
+  if(cardId==='bear'){
+    victim.credits=Math.max(0,(victim.credits||0)-300);
+    await writeState(s); await addEvent(`${attacker.name} пусна „Мечи пазар“ срещу ${victim.name}: -300.`, 'bad');
+  }
+  if(cardId==='arbitrage'){
+    const take=Math.floor((victim.credits||0)*0.25); victim.credits=(victim.credits||0)-take; attacker.credits=(attacker.credits||0)+take;
+    await writeState(s); await addEvent(`${attacker.name} направи арбитраж и взе ${take} от ${victim.name}.`, 'bad');
+  }
+  if(cardId==='margin'){
+    victim.skipThis=true; await writeState(s); await addEvent(`${attacker.name} изпрати Margin Call към ${victim.name}. Следващият въпрос е блокиран.`, 'bad');
+  }
+  if(cardId==='pvalue'){
+    if((victim.credits||0)>(attacker.credits||0)){victim.credits=Math.max(0,(victim.credits||0)-200); attacker.credits=(attacker.credits||0)+200; await writeState(s); await addEvent(`${attacker.name} хвана ${victim.name} в p-value капан: +200 за атакуващия.`, 'bad');}
+    else {attacker.credits=Math.max(0,(attacker.credits||0)-100); await writeState(s); await addEvent(`${attacker.name} обърка p-value капана и загуби 100.`, 'bad');}
+  }
+  setTimeout(()=>advanceQuestion(false),1000);
+};
+
+window.openMasterHack=()=>{
+  const list=activePlayers().filter(p=>p.id!==playerId);
+  if(!list.length)return toast('Няма кого да удариш с КВАНТОВ УДАР.');
+  document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="masterModal"><div class="modal-box"><h2>💀 КВАНТОВ УДАР</h2><p class="muted">Кради 35% от КвантКредитите. Ако жертвата има защита, тя пада.</p>${list.map(p=>`<button class="wide danger" onclick="window.applyMasterHack('${p.id}')">${esc(p.name)} — 💰 ${p.credits||0} ${p.shieldRounds>0?'🛡️':''}</button><br><br>`).join('')}<button class="ghost" onclick="document.getElementById('masterModal').remove()">Отказ</button></div></div>`);
+};
+window.applyMasterHack=async(targetId)=>{
+  document.getElementById('masterModal')?.remove();
+  const s=await readState(); const a=s.players?.[playerId], v=s.players?.[targetId]; if(!a||!v)return;
+  a.masterHack=false;
+  if((v.shieldRounds||0)>0){v.shieldRounds=Math.max(0,(v.shieldRounds||0)-1); await writeState(s); await addEvent(`${a.name} пусна КВАНТОВ УДАР срещу ${v.name}, но удари защитна стена.`, 'bad'); return;}
+  const take=Math.floor((v.credits||0)*0.35); v.credits=(v.credits||0)-take; a.credits=(a.credits||0)+take;
+  await writeState(s); await addEvent(`💀 КВАНТОВ УДАР: ${a.name} открадна ${take} от ${v.name}.`, 'bad');
+};
+
+async function advanceQuestion(wasSkip){
+  const p=me(); if(!p)return;
+  const next=Math.min((p.qIndex||0)+1,QUESTIONS.length);
+  await patchPath(`players/${playerId}`,{qIndex:next,answeredAt:0,skipThis:false,lastSeen:now()});
+}
+window.advanceQuestion=advanceQuestion;
+window.restartMe=async()=>{const p=me(); if(!p)return; await patchPath(`players/${playerId}`,{credits:1000,stocks:0,investors:0,riskCapital:0,coupons:0,streak:0,qIndex:0,shieldRounds:0,masterHack:false,doubleNext:false,risky:false,skipThis:false,answeredAt:0}); await addEvent(`${p.name} рестартира фонда си.`, 'good');};
+window.changeRoom=()=>{const r=prompt('Код на стаята:',room); if(!r)return; room=r.toUpperCase().replace(/[^A-Z0-9А-Я]/g,'').slice(0,12)||'FM'; localStorage.setItem('quant_room',room); location.search=`?mode=player&room=${encodeURIComponent(room)}`;};
+window.showLinks=()=>{document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="links"><div class="modal-box"><h2>Линкове за стаята ${esc(room)}</h2><p>Играчи:</p><div class="linkbox">${esc(playerUrl())}</div><p>Проектор:</p><div class="linkbox">${esc(projectorUrl())}</div><br><button onclick="document.getElementById('links').remove()">OK</button></div></div>`)};
+
+listen();
+</script>
+</body>
+</html>
