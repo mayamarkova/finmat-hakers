@@ -39,7 +39,13 @@
     .blink{animation:blink 1s steps(2,end) infinite}@keyframes blink{50%{opacity:.45}}
     .hidden{display:none!important}.toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:#0b1025;border:1px solid rgba(0,245,255,.32);border-radius:16px;padding:14px 16px;box-shadow:var(--shadow);z-index:50;max-width:min(720px,92vw)}
     .modal{position:fixed;inset:0;background:rgba(0,0,0,.72);display:grid;place-items:center;z-index:40;padding:18px}.modal-box{width:min(640px,96vw);background:linear-gradient(180deg,#11183a,#070a19);border:1px solid rgba(0,245,255,.35);border-radius:24px;padding:20px;box-shadow:0 0 50px rgba(0,245,255,.2)}.linkbox{font-family:ui-monospace,Consolas,monospace;word-break:break-all;color:var(--green);background:#02050e;padding:12px;border-radius:12px;border:1px solid rgba(40,255,156,.25)}
-  </style>
+  
+    .result-badge{font-size:clamp(34px,8vw,72px);font-weight:1000;line-height:1;text-shadow:0 0 22px rgba(0,245,255,.6)}
+    .result-good{color:var(--green);text-shadow:0 0 22px rgba(40,255,156,.7)}
+    .result-bad{color:var(--red);text-shadow:0 0 22px rgba(255,77,109,.7)}
+    .answer.reveal-correct{border-color:var(--green);background:linear-gradient(135deg,rgba(40,255,156,.22),#0a0e22);box-shadow:0 0 24px rgba(40,255,156,.32)}
+    .answer.reveal-wrong{border-color:var(--red);background:linear-gradient(135deg,rgba(255,77,109,.22),#0a0e22);box-shadow:0 0 24px rgba(255,77,109,.28)}
+</style>
 </head>
 <body>
 <header>
@@ -153,6 +159,13 @@ let musicOn=false, lastFinishedState=false;
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>'"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[m]));
 const toast=(msg,ms=2600)=>{toastBox.innerHTML=msg;toastBox.classList.remove('hidden');setTimeout(()=>toastBox.classList.add('hidden'),ms)};
+function showAnswerResult(title, message, kind='good'){
+  document.getElementById('answerResult')?.remove();
+  const cls = kind==='good' ? 'result-good' : 'result-bad';
+  document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="answerResult"><div class="modal-box center"><div class="result-badge ${cls}">${title}</div><p style="font-size:18px">${message}</p></div></div>`);
+}
+function hideAnswerResult(){ document.getElementById('answerResult')?.remove(); }
+
 const roomPath=()=>`quantHackRooms/${room}`;
 const localKey=()=>`quantHack_${room}`;
 const rnd=n=>Math.floor(Math.random()*n);
@@ -255,7 +268,7 @@ function renderPlayer(){
       </div><br>
       ${done?`<div class="glass center"><h2>🏁 Портфейлът е затворен!</h2><p>${gameFinished()?`Играта приключи. Победител: <b>${esc(winner()?.name||'')}</b>.`:`Ти завърши всички въпроси. Изчакваме останалите фондове да затворят позициите си.`}</p><button class="btn3" onclick="window.restartMe()">🔁 Играй отново</button></div>`:
       skipped?`<div class="glass center"><h2>⚠️ Margin Call</h2><p>Този въпрос е блокиран. Следващият ще се отвори сам.</p></div>`:
-      `<div class="glass"><span class="pill">${esc(q.t)} ${q.boss?'• БОС ВЪПРОС':''} ${isFinal(p)?'• ⚔️ БИТКА ЗА FM-RU INDEX ×2':''}</span><h2>${esc(q.q)}</h2></div><br>${options.map(o=>`<button class="answer" onclick="window.answer(${o.i},this)">${esc(o.text)}</button>`).join('')}`}
+      `<div class="glass"><span class="pill">${esc(q.t)} ${q.boss?'• БОС ВЪПРОС':''} ${isFinal(p)?'• ⚔️ БИТКА ЗА FM-RU INDEX ×2':''}</span><h2>${esc(q.q)}</h2></div><br>${options.map(o=>`<button class="answer" data-i="${o.i}" onclick="window.answer(${o.i},this)">${esc(o.text)}</button>`).join('')}`}
     </section>
     <section class="card col-4"><h2>Стойност на портфейла</h2><div class="scorebig">${p.credits||0}</div><p class="muted">КвантКредити</p>${p.masterHack?'<button class="btn2" onclick="window.openMasterHack()">💀 КВАНТОВ УДАР</button><br><br>':''}<button class="ghost small" onclick="window.showLinks()">🔗 Линкове за стаята</button></section>
     <section class="card col-12"><h2>🏆 Класиране на фондовете</h2>${leaderboardHtml()}</section>
@@ -294,7 +307,10 @@ window.answer=async(choice,btn)=>{
   const p=me(); if(!p)return; const q=myQuestion();
   document.querySelectorAll('.answer').forEach(b=>b.disabled=true);
   const correct=choice===q.c;
-  btn.classList.add(correct?'correct':'wrong');
+  document.querySelectorAll('.answer').forEach(b=>{
+    if(Number(b.dataset.i)===q.c) b.classList.add('reveal-correct');
+  });
+  if(!correct) btn.classList.add('reveal-wrong');
   let patch={lastSeen:now(),answeredAt:now(),skipThis:false};
   if(correct){
     let gain=baseWin(q,p);
@@ -308,7 +324,8 @@ window.answer=async(choice,btn)=>{
     if(p.shieldRounds>0) patch.shieldRounds=Math.max(0,(p.shieldRounds||0)-1);
     await patchPath(`players/${playerId}`,cleanPatch(patch));
     await addEvent(`${p.name} отговори вярно и реализира доходност +${gain}.`, 'good');
-    setTimeout(()=>drawCard(),650);
+    showAnswerResult('✅ ВЯРНО!', `Доходност: <b>+${gain}</b> КвантКредита. Следва теглене на карта.`, 'good');
+    setTimeout(()=>{hideAnswerResult(); drawCard();},1400);
   }else{
     let loss=q.boss?500:150;
     if(p.risky) loss+=800;
@@ -318,7 +335,8 @@ window.answer=async(choice,btn)=>{
     if(p.shieldRounds>0) patch.shieldRounds=Math.max(0,(p.shieldRounds||0)-1);
     await patchPath(`players/${playerId}`,cleanPatch(patch));
     await addEvent(`${p.name} сбърка и получи пазарна загуба -${loss}.`, 'bad');
-    setTimeout(()=>advanceQuestion(false),1700);
+    showAnswerResult('❌ ГРЕШНО', `Верният отговор е:<br><b>${esc(q.a[q.c])}</b><br>Пазарна загуба: <b>-${loss}</b> КвантКредита.`, 'bad');
+    setTimeout(()=>{hideAnswerResult(); advanceQuestion(false);},3000);
   }
 };
 
