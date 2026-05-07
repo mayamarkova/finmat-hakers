@@ -31,6 +31,12 @@
     .terminal{height:310px;border-radius:23px;position:relative;overflow:hidden;background:radial-gradient(circle,#0e234c 0,#071027 55%,#030611 100%);border:1px solid rgba(0,245,255,.25)}
     .terminal svg{position:absolute;inset:0;width:100%;height:100%;opacity:.8}.ticker{position:absolute;left:0;right:0;bottom:0;padding:10px;background:rgba(0,0,0,.38);border-top:1px solid rgba(0,245,255,.22);font-family:ui-monospace,Consolas,monospace;color:var(--green);white-space:nowrap;overflow:hidden}.ticker span{display:inline-block;animation:ticker 18s linear infinite}@keyframes ticker{from{transform:translateX(100%)}to{transform:translateX(-100%)}}
     .chart-label{position:absolute;color:#d5f0ff;font-weight:900;font-size:13px;text-shadow:0 0 8px #000}.candle{position:absolute;width:10px;border-radius:3px;background:var(--green);box-shadow:0 0 14px rgba(40,255,156,.6)}.candle.red{background:var(--red);box-shadow:0 0 14px rgba(255,77,109,.6)}
+
+    .music-float{position:fixed;right:16px;bottom:16px;z-index:60;border-radius:999px;padding:12px 15px;background:linear-gradient(135deg,var(--pink),var(--cyan));color:white;box-shadow:0 0 24px rgba(0,245,255,.28)}
+    .winner-banner{background:linear-gradient(135deg,rgba(255,209,102,.20),rgba(40,255,156,.12));border:1px solid rgba(255,209,102,.55);border-radius:24px;padding:22px;margin-bottom:15px;box-shadow:0 0 34px rgba(255,209,102,.18);text-align:center}
+    .winner-title{font-size:clamp(28px,5vw,64px);font-weight:1000;line-height:1;color:var(--yellow);text-shadow:0 0 18px rgba(255,209,102,.6)}
+    .winner-name{font-size:clamp(32px,6vw,76px);font-weight:1000;line-height:1.05;color:var(--green);text-shadow:0 0 22px rgba(40,255,156,.55);margin-top:10px}
+    .blink{animation:blink 1s steps(2,end) infinite}@keyframes blink{50%{opacity:.45}}
     .hidden{display:none!important}.toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:#0b1025;border:1px solid rgba(0,245,255,.32);border-radius:16px;padding:14px 16px;box-shadow:var(--shadow);z-index:50;max-width:min(720px,92vw)}
     .modal{position:fixed;inset:0;background:rgba(0,0,0,.72);display:grid;place-items:center;z-index:40;padding:18px}.modal-box{width:min(640px,96vw);background:linear-gradient(180deg,#11183a,#070a19);border:1px solid rgba(0,245,255,.35);border-radius:24px;padding:20px;box-shadow:0 0 50px rgba(0,245,255,.2)}.linkbox{font-family:ui-monospace,Consolas,monospace;word-break:break-all;color:var(--green);background:#02050e;padding:12px;border-radius:12px;border:1px solid rgba(40,255,156,.25)}
   </style>
@@ -42,6 +48,7 @@
 </header>
 <div class="wrap" id="app"></div>
 <div id="toast" class="toast hidden"></div>
+<button id="musicToggle" class="music-float" onclick="window.toggleMusic()">🎧 Музика</button>
 
 <script type="module">
 /*
@@ -140,6 +147,7 @@ localStorage.setItem('quant_room',room);
 let playerId=localStorage.getItem('quant_player_id') || crypto.randomUUID(); localStorage.setItem('quant_player_id',playerId);
 let playerName=localStorage.getItem('quant_player_name') || '';
 let state=null, unsub=null, lastAutoAdvance=0;
+let audioCtx=null, musicTimer=null, musicOn=false, lastFinishedState=false;
 
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>'"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[m]));
@@ -172,10 +180,55 @@ function baseWin(q,p){let gain=q.boss?1000:250; if(isFinal(p)) gain*=2; if(p.dou
 function cleanPatch(patch){Object.keys(patch).forEach(k=>patch[k]===undefined && delete patch[k]); return patch;}
 function currentPortfolioValue(p){return p?.credits||0;}
 
+function finishedPlayers(){return players().filter(p=>p.name && (p.qIndex||0)>=QUESTIONS.length);}
+function gameFinished(){const ps=players().filter(p=>p.name); return ps.length>0 && ps.every(p=>(p.qIndex||0)>=QUESTIONS.length);}
+function winner(){return sortedPlayers()[0]||null;}
+function winnerHtml(){
+  if(!gameFinished()) return '';
+  const w=winner(); if(!w) return '';
+  return `<div class="winner-banner"><div class="winner-title">🏆 ПАЗАРЪТ ЗАТВОРИ</div><div class="muted">Победител в RUSE QUANT EXCHANGE</div><div class="winner-name">${esc(w.name)}</div><div class="scorebig">${currentPortfolioValue(w)}</div><p class="muted">КвантКредити • Финансовата математика има нов властелин на портфейла.</p></div>`;
+}
+function updateMusicButton(){const b=document.getElementById('musicToggle'); if(b) b.textContent=musicOn?'⏸️ Спри музика':'🎧 Музика';}
+function playTone(freq,dur=0.12,type='sawtooth',vol=0.035){
+  if(!audioCtx || !musicOn) return;
+  const t=audioCtx.currentTime;
+  const osc=audioCtx.createOscillator();
+  const gain=audioCtx.createGain();
+  osc.type=type; osc.frequency.setValueAtTime(freq,t);
+  gain.gain.setValueAtTime(0.0001,t);
+  gain.gain.exponentialRampToValueAtTime(vol,t+0.015);
+  gain.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  osc.connect(gain).connect(audioCtx.destination);
+  osc.start(t); osc.stop(t+dur+0.03);
+}
+async function startMusic(){
+  if(musicOn || gameFinished()) return;
+  audioCtx = audioCtx || new (window.AudioContext||window.webkitAudioContext)();
+  await audioCtx.resume();
+  musicOn=true; updateMusicButton();
+  const bass=[82.41,98,110,123.47,110,98,92.5,82.41];
+  const lead=[329.63,392,493.88,392,369.99,329.63,293.66,246.94];
+  let step=0;
+  musicTimer=setInterval(()=>{
+    if(gameFinished()){stopMusic(); return;}
+    playTone(bass[step%bass.length],0.11,'square',0.018);
+    if(step%2===0) playTone(lead[step%lead.length],0.08,'sawtooth',0.012);
+    if(step%4===3) playTone(659.25,0.035,'triangle',0.008);
+    step++;
+  },150);
+  toast('🎧 Хакерската музика е включена. Ако стане прекалено Wall Street, натисни бутона долу вдясно.');
+}
+function stopMusic(){
+  if(musicTimer) clearInterval(musicTimer);
+  musicTimer=null; musicOn=false; updateMusicButton();
+}
+window.toggleMusic=async()=>{ if(musicOn) stopMusic(); else await startMusic(); };
+
+
 function leaderboardHtml(){const list=sortedPlayers(); if(!list.length)return '<p class="muted">Още няма играчи.</p>'; return list.map((p,i)=>`<div class="leader"><div class="rank">${i+1}</div><div><div class="name">${esc(p.name)}</div><div class="muted">Q${Math.min((p.qIndex||0)+1,QUESTIONS.length)}/${QUESTIONS.length} • 🔥 ${p.streak||0} ${p.shieldRounds>0?'• 🛡️ '+p.shieldRounds:''} ${p.masterHack?'• 💀 квантов удар':''}</div></div><div class="score">${currentPortfolioValue(p)}</div></div>`).join('');}
 function eventsHtml(limit=8){const ev=Object.values(state?.events||{}).sort((a,b)=>(b.ts||0)-(a.ts||0)).slice(0,limit); if(!ev.length)return '<p class="muted">Пазарът още е спокоен. Подозрително спокоен.</p>'; return ev.map(e=>`<div class="event ${e.kind||''}">${esc(e.text)}<div class="muted" style="font-size:12px">${new Date(e.ts).toLocaleTimeString('bg-BG',{hour:'2-digit',minute:'2-digit'})}</div></div>`).join('');}
 
-function render(){ if(mode==='projector') return renderProjector(); return renderPlayer(); }
+function render(){ const finished=gameFinished(); if(finished) stopMusic(); if(finished && !lastFinishedState){ lastFinishedState=true; const w=winner(); if(w) addEvent(`🏆 Пазарът затвори. Победител: ${w.name} с ${currentPortfolioValue(w)} КвантКредита.`, 'good'); } if(!finished) lastFinishedState=false; if(mode==='projector') return renderProjector(); return renderPlayer(); }
 
 function renderPlayer(){
   if(!state) return app.innerHTML='<div class="card center">Зареждане...</div>';
@@ -191,7 +244,7 @@ function renderPlayer(){
       <div class="row">
         <span class="pill">💰 ${p.credits||0}</span><span class="pill">📈 ${p.stocks||0}</span><span class="pill">🧑‍💼 ${p.investors||0}</span><span class="pill">⚡ ${p.riskCapital||0}</span><span class="pill">🔥 серия ${p.streak||0}</span>${p.shieldRounds>0?`<span class="pill">🛡️ ${p.shieldRounds}</span>`:''}${p.risky?'<span class="pill">⚠️ риск</span>':''}${p.doubleNext?'<span class="pill">×2 печалба</span>':''}
       </div><br>
-      ${done?`<div class="glass center"><h2>🏁 Портфейлът е затворен!</h2><p>Ти завърши всички въпроси. Следи RUSE QUANT EXCHANGE на проектора.</p><button class="btn3" onclick="window.restartMe()">🔁 Играй отново</button></div>`:
+      ${done?`<div class="glass center"><h2>🏁 Портфейлът е затворен!</h2><p>${gameFinished()?`Играта приключи. Победител: <b>${esc(winner()?.name||'')}</b>.`:`Ти завърши всички въпроси. Изчакваме останалите фондове да затворят позициите си.`}</p><button class="btn3" onclick="window.restartMe()">🔁 Играй отново</button></div>`:
       skipped?`<div class="glass center"><h2>⚠️ Margin Call</h2><p>Този въпрос е блокиран. Следващият ще се отвори сам.</p></div>`:
       `<div class="glass"><span class="pill">${esc(q.t)} ${q.boss?'• БОС ВЪПРОС':''} ${isFinal(p)?'• ⚔️ БИТКА ЗА FM-RU INDEX ×2':''}</span><h2>${esc(q.q)}</h2></div><br>${options.map(o=>`<button class="answer" onclick="window.answer(${o.i},this)">${esc(o.text)}</button>`).join('')}`}
     </section>
@@ -202,17 +255,17 @@ function renderPlayer(){
 }
 
 function renderJoin(){
-  app.innerHTML=`<div class="grid"><section class="card col-7"><h2>Вход в RUSE QUANT EXCHANGE</h2><p class="muted">Играта започва автоматично. Няма учителски старт — пазарът отваря веднага.</p><p>Стая: <b>${esc(room)}</b></p><input id="name" placeholder="Име или квантов псевдоним"><br><br><button onclick="window.registerPlayer()">⚡ Влизам на пазара</button><br><br><button class="ghost small" onclick="window.changeRoom()">Смени стая</button></section><section class="card col-5"><h2>Проектор</h2><p class="muted">Отвори този линк на компютъра с проектора:</p><div class="linkbox">${esc(projectorUrl())}</div></section></div>`;
+  app.innerHTML=`${winnerHtml()}<div class="grid"><section class="card col-7"><h2>Вход в RUSE QUANT EXCHANGE</h2><p class="muted">Играта започва автоматично. Няма учителски старт — пазарът отваря веднага.</p><p>Стая: <b>${esc(room)}</b></p><input id="name" placeholder="Име или квантов псевдоним"><br><br><button onclick="window.registerPlayer()">⚡ Влизам на пазара</button><br><br><button class="ghost small" onclick="window.changeRoom()">Смени стая</button></section><section class="card col-5"><h2>Проектор</h2><p class="muted">Отвори този линк на компютъра с проектора:</p><div class="linkbox">${esc(projectorUrl())}</div></section></div>`;
 }
 
 function renderProjector(){
   if(!state) return app.innerHTML='<div class="card center">Зареждане на борсовия екран...</div>';
-  app.innerHTML=`<div class="grid"><section class="card col-7"><div class="row space"><h2>🖥️ RUSE QUANT EXCHANGE • ${esc(room)}</h2><span class="pill">${FIREBASE_READY?'online Firebase':'local demo'}</span></div><div class="terminal">
+  app.innerHTML=`${winnerHtml()}<div class="grid"><section class="card col-7"><div class="row space"><h2>🖥️ RUSE QUANT EXCHANGE • ${esc(room)}</h2><span class="pill">${FIREBASE_READY?'online Firebase':'local demo'}</span></div><div class="terminal">
     <svg viewBox="0 0 100 100" preserveAspectRatio="none"><polyline points="0,78 8,73 15,76 22,61 31,66 39,48 46,57 55,32 63,38 72,24 83,36 100,18" fill="none" stroke="rgba(40,255,156,.85)" stroke-width="1.8"/><polyline points="0,55 10,58 18,52 26,64 35,49 45,53 58,41 69,45 79,34 90,38 100,29" fill="none" stroke="rgba(0,245,255,.55)" stroke-width="1"/></svg>
     <span class="candle" style="left:12%;top:62%;height:42px"></span><span class="candle red" style="left:20%;top:54%;height:58px"></span><span class="candle" style="left:31%;top:48%;height:45px"></span><span class="candle" style="left:45%;top:31%;height:62px"></span><span class="candle red" style="left:58%;top:37%;height:52px"></span><span class="candle" style="left:72%;top:22%;height:69px"></span><span class="candle" style="left:86%;top:18%;height:54px"></span>
     <span class="chart-label" style="left:7%;top:12%">FM-RU INDEX</span><span class="chart-label" style="right:7%;top:12%;color:var(--green)">+${Math.max(0,sortedPlayers()[0]?.credits||0)}</span>
     <div class="ticker"><span>📈 Бичи пазар • 🧮 Регресионен модел • 🎲 Закон за големите числа • 🛡️ Застрахователна полица • 🤖 AI трейдър • 🔥 Black Swan • </span></div>
-  </div><h2>⚡ Пазарни събития и хаквания</h2>${eventsHtml(10)}<br><button class="ghost small" onclick="window.showLinks()">🔗 Покажи линк за играчи</button></section><section class="card col-5"><h2>🏆 Класиране на фондовете</h2>${leaderboardHtml()}</section></div>`;
+  </div><h2>⚡ Пазарни събития и хаквания</h2>${eventsHtml(10)}<br><button class="ghost small" onclick="window.showLinks()">🔗 Покажи линк за играчи</button> <button class="ghost small" onclick="window.toggleMusic()">🎧 Музика</button></section><section class="card col-5"><h2>🏆 Класиране на фондовете</h2>${leaderboardHtml()}</section></div>`;
 }
 
 async function heartbeat(){const p=me(); if(!p || now()-(p.lastSeen||0)<15000)return; await patchPath(`players/${playerId}`,{lastSeen:now()});}
@@ -225,6 +278,7 @@ window.registerPlayer=async()=>{
   const p={name,credits:1000,stocks:0,investors:0,riskCapital:0,streak:0,qIndex:0,shieldRounds:0,masterHack:false,doubleNext:false,risky:false,skipThis:false,lastSeen:now(),joinedAt:now()};
   await setPath(`players/${playerId}`,p);
   await addEvent(`${name} отвори фонд на RUSE QUANT EXCHANGE.`, 'good');
+  startMusic().catch(()=>toast('Браузърът блокира автоматичния звук. Натисни 🎧 Музика долу вдясно.'));
 };
 
 window.answer=async(choice,btn)=>{
