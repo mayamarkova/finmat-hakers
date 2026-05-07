@@ -189,41 +189,127 @@ function winnerHtml(){
   return `<div class="winner-banner"><div class="winner-title">🏆 ПАЗАРЪТ ЗАТВОРИ</div><div class="muted">Победител в RUSE QUANT EXCHANGE</div><div class="winner-name">${esc(w.name)}</div><div class="scorebig">${currentPortfolioValue(w)}</div><p class="muted">КвантКредити • Финансовата математика има нов властелин на портфейла.</p></div>`;
 }
 function updateMusicButton(){const b=document.getElementById('musicToggle'); if(b) b.textContent=musicOn?'⏸️ Спри музика':'🎧 Музика';}
-function playTone(freq,dur=0.12,type='sawtooth',vol=0.035){
+function midiToFreq(m){return 440*Math.pow(2,(m-69)/12);}
+function makeGain(vol=0.03){
+  const g=audioCtx.createGain();
+  g.gain.value=vol;
+  g.connect(audioCtx.destination);
+  return g;
+}
+let masterGain=null, filterNode=null, delayNode=null, delayGain=null;
+function ensureAudioGraph(){
+  if(masterGain) return;
+  masterGain=audioCtx.createGain();
+  masterGain.gain.setValueAtTime(0.16,audioCtx.currentTime);
+  filterNode=audioCtx.createBiquadFilter();
+  filterNode.type='lowpass';
+  filterNode.frequency.setValueAtTime(2200,audioCtx.currentTime);
+  filterNode.Q.setValueAtTime(0.8,audioCtx.currentTime);
+  delayNode=audioCtx.createDelay(0.35);
+  delayNode.delayTime.setValueAtTime(0.19,audioCtx.currentTime);
+  delayGain=audioCtx.createGain();
+  delayGain.gain.setValueAtTime(0.18,audioCtx.currentTime);
+  masterGain.connect(audioCtx.destination);
+  filterNode.connect(masterGain);
+  filterNode.connect(delayNode);
+  delayNode.connect(delayGain);
+  delayGain.connect(masterGain);
+}
+function env(gain,t,attack,decay,vol){
+  gain.gain.cancelScheduledValues(t);
+  gain.gain.setValueAtTime(0.0001,t);
+  gain.gain.exponentialRampToValueAtTime(vol,t+attack);
+  gain.gain.exponentialRampToValueAtTime(0.0001,t+attack+decay);
+}
+function synth(freq,t,dur=0.14,type='sawtooth',vol=0.035,dest=null,detune=0){
   if(!audioCtx || !musicOn) return;
-  const t=audioCtx.currentTime;
+  ensureAudioGraph();
   const osc=audioCtx.createOscillator();
   const gain=audioCtx.createGain();
-  osc.type=type; osc.frequency.setValueAtTime(freq,t);
-  gain.gain.setValueAtTime(0.0001,t);
-  gain.gain.exponentialRampToValueAtTime(vol,t+0.015);
-  gain.gain.exponentialRampToValueAtTime(0.0001,t+dur);
-  osc.connect(gain).connect(audioCtx.destination);
-  osc.start(t); osc.stop(t+dur+0.03);
+  osc.type=type;
+  osc.frequency.setValueAtTime(freq,t);
+  osc.detune.setValueAtTime(detune,t);
+  env(gain,t,0.012,dur,vol);
+  osc.connect(gain).connect(dest||filterNode);
+  osc.start(t); osc.stop(t+dur+0.08);
+}
+function kick(t){
+  ensureAudioGraph();
+  const osc=audioCtx.createOscillator(), gain=audioCtx.createGain();
+  osc.type='sine';
+  osc.frequency.setValueAtTime(120,t);
+  osc.frequency.exponentialRampToValueAtTime(42,t+0.12);
+  env(gain,t,0.004,0.18,0.12);
+  osc.connect(gain).connect(masterGain);
+  osc.start(t); osc.stop(t+0.23);
+}
+function snare(t){
+  ensureAudioGraph();
+  const buffer=audioCtx.createBuffer(1,audioCtx.sampleRate*0.16,audioCtx.sampleRate);
+  const data=buffer.getChannelData(0);
+  for(let i=0;i<data.length;i++) data[i]=(Math.random()*2-1)*(1-i/data.length);
+  const src=audioCtx.createBufferSource(); src.buffer=buffer;
+  const bp=audioCtx.createBiquadFilter(); bp.type='bandpass'; bp.frequency.setValueAtTime(1800,t); bp.Q.setValueAtTime(0.7,t);
+  const gain=audioCtx.createGain(); env(gain,t,0.003,0.11,0.055);
+  src.connect(bp).connect(gain).connect(masterGain);
+  src.start(t); src.stop(t+0.18);
+}
+function hat(t){
+  ensureAudioGraph();
+  const buffer=audioCtx.createBuffer(1,audioCtx.sampleRate*0.045,audioCtx.sampleRate);
+  const data=buffer.getChannelData(0);
+  for(let i=0;i<data.length;i++) data[i]=(Math.random()*2-1)*(1-i/data.length);
+  const src=audioCtx.createBufferSource(); src.buffer=buffer;
+  const hp=audioCtx.createBiquadFilter(); hp.type='highpass'; hp.frequency.setValueAtTime(6500,t);
+  const gain=audioCtx.createGain(); env(gain,t,0.002,0.035,0.022);
+  src.connect(hp).connect(gain).connect(masterGain);
+  src.start(t); src.stop(t+0.055);
+}
+function pad(t,root){
+  ensureAudioGraph();
+  [root,root+7,root+12].forEach((m,i)=>{
+    synth(midiToFreq(m),t,1.15,'triangle',0.012,filterNode,i?4:-4);
+  });
 }
 async function startMusic(){
   if(musicOn || gameFinished()) return;
   audioCtx = audioCtx || new (window.AudioContext||window.webkitAudioContext)();
   await audioCtx.resume();
-  musicOn=true; updateMusicButton();
-  const bass=[82.41,98,110,123.47,110,98,92.5,82.41];
-  const lead=[329.63,392,493.88,392,369.99,329.63,293.66,246.94];
-  let step=0;
+  musicOn=true; updateMusicButton(); ensureAudioGraph();
+  const bpm=112, beat=60/bpm, stepDur=beat/2;
+  const bass=[40,40,47,40,43,43,38,38, 40,40,47,50,43,43,45,47];
+  const arp =[64,67,71,76,74,71,67,64, 62,66,69,74,72,69,66,62];
+  const pads=[40,43,38,45];
+  let step=0, nextTime=audioCtx.currentTime+0.08;
   musicTimer=setInterval(()=>{
     if(gameFinished()){stopMusic(); return;}
-    playTone(bass[step%bass.length],0.11,'square',0.018);
-    if(step%2===0) playTone(lead[step%lead.length],0.08,'sawtooth',0.012);
-    if(step%4===3) playTone(659.25,0.035,'triangle',0.008);
-    step++;
-  },150);
-  toast('🎧 Хакерската музика е включена. Ако стане прекалено Wall Street, натисни бутона долу вдясно.');
+    while(nextTime<audioCtx.currentTime+0.45){
+      const s=step%16;
+      if(s===0 || s===8) kick(nextTime);
+      if(s===4 || s===12) snare(nextTime);
+      if(s%2===1) hat(nextTime);
+      synth(midiToFreq(bass[s]),nextTime,0.18,'square',0.026,filterNode);
+      if(s%2===0) synth(midiToFreq(arp[s]),nextTime,0.12,'sawtooth',0.018,filterNode);
+      if(s===0) pad(nextTime,pads[Math.floor(step/16)%pads.length]);
+      const sweep=1700+900*Math.sin(step/8);
+      filterNode.frequency.setTargetAtTime(sweep,nextTime,0.08);
+      nextTime+=stepDur; step++;
+    }
+  },90);
+  toast('🎧 Synthwave режимът е включен. Квантовата борса вече има саундтрак.');
 }
 function stopMusic(){
   if(musicTimer) clearInterval(musicTimer);
   musicTimer=null; musicOn=false; updateMusicButton();
+  if(masterGain && audioCtx){
+    const t=audioCtx.currentTime;
+    masterGain.gain.cancelScheduledValues(t);
+    masterGain.gain.setValueAtTime(masterGain.gain.value||0.16,t);
+    masterGain.gain.exponentialRampToValueAtTime(0.0001,t+0.35);
+    setTimeout(()=>{masterGain=null; filterNode=null; delayNode=null; delayGain=null;},420);
+  }
 }
 window.toggleMusic=async()=>{ if(musicOn) stopMusic(); else await startMusic(); };
-
 
 function leaderboardHtml(){const list=sortedPlayers(); if(!list.length)return '<p class="muted">Още няма играчи.</p>'; return list.map((p,i)=>`<div class="leader"><div class="rank">${i+1}</div><div><div class="name">${esc(p.name)}</div><div class="muted">Q${Math.min((p.qIndex||0)+1,QUESTIONS.length)}/${QUESTIONS.length} • 🔥 ${p.streak||0} ${p.shieldRounds>0?'• 🛡️ '+p.shieldRounds:''} ${p.masterHack?'• 💀 квантов удар':''}</div></div><div class="score">${currentPortfolioValue(p)}</div></div>`).join('');}
 function eventsHtml(limit=8){const ev=Object.values(state?.events||{}).sort((a,b)=>(b.ts||0)-(a.ts||0)).slice(0,limit); if(!ev.length)return '<p class="muted">Пазарът още е спокоен. Подозрително спокоен.</p>'; return ev.map(e=>`<div class="event ${e.kind||''}">${esc(e.text)}<div class="muted" style="font-size:12px">${new Date(e.ts).toLocaleTimeString('bg-BG',{hour:'2-digit',minute:'2-digit'})}</div></div>`).join('');}
